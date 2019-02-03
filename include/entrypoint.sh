@@ -21,14 +21,14 @@ fi
 # Certificate challenge auth subdomain
 export CERT_CHALLENGE_SUBDOMAIN=_acme-challenge
 
-# Certificate challenges folder
-export CERT_CHALLENGE_DIR=$WORKING_DIR/cert_challenges
+# Certificate challenges environment variable (one challenge token per line)
+export CERT_CHALLENGES_FILE=$WORKING_DIR/cert_challenges.txt
 
 # Certificate output directory
 export CERT_DIR=$WORKING_DIR/certs
 
-# Cert hooks file for dehydrated
-export CERT_HOOKS=$WORKING_DIR/cert_hooks.sh
+# Cert hooks command for dehydrated
+export CERT_HOOKS=$WORKING_DIR/cert_hooks.pl
 
 # Domains file for dehydrated
 export DOMAINS_TXT=$WORKING_DIR/domains.txt
@@ -38,6 +38,9 @@ export DEHYDRATED_CONFIG=$WORKING_DIR/dehydrated_config.sh
 
 # PowerDNS hooks
 export PDNS_HOOKS=$WORKING_DIR/pdns.pl
+
+# PowerDNS log file
+export PDNS_LOG=$WORKING_DIR/pdns.log
 
 echo ""
 echo "========"
@@ -50,18 +53,35 @@ echo "ACME registration email address: $CERT_EMAIL"
 echo "========"
 echo ""
 
-# Start PowerDNS server for ACME DNS-01 auth challenge
-nohup pdns_server --no-config --daemon=no --local-address=0.0.0.0 --local-port=53 --launch=pipe --pipe-command=$PDNS_HOOKS &>pdns.log &
-sleep 2
-
 # Write domains.txt
 echo "$DOMAIN *.$DOMAIN" > $DOMAINS_TXT
 
-# Create the CERT_CHALLENGE_DIR if it doesn't exist
-mkdir -p $CERT_CHALLENGE_DIR
+# Start PowerDNS server for ACME DNS-01 auth challenge
+nohup pdns_server --no-config --daemon=no --local-address=0.0.0.0 --local-port=53 --launch=pipe --pipe-command=$PDNS_HOOKS &>$PDNS_LOG &
+PDNS_PID=$!
+
+# Wait for some time in case PowerDNS took longer than usual to start
+sleep 2
+
+# Print out the startup log of PowerDNS
+echo ""
+echo "+--------------------+"
+echo "| Start PowerDNS Log |"
+echo "+--------------------+"
+cat $PDNS_LOG
+echo "+------------------+"
+echo "| End PowerDNS Log |"
+echo "+------------------+"
+echo ""
+
 
 # Get/renew cert for the domain
+echo "Registering with Let's Encrypt using dehydrated"
 dehydrated --register --accept-terms --config $DEHYDRATED_CONFIG
+echo "Running dehydrated"
 dehydrated --cron --config $DEHYDRATED_CONFIG
+echo "Finished running dehydrated"
 
-/bin/sh
+# Kill the PowerDNS server
+kill $PDNS_PID
+echo "Stopped PowerDNS server"

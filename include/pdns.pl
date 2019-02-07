@@ -2,7 +2,7 @@
 
 use strict;
 
-$|=1;                   # No buffering
+$|=1; # No buffering
 
 my $line=<>;
 chomp($line);
@@ -13,7 +13,7 @@ unless($line eq "HELO\t1") {
     <>;
     exit;
 }
-print "OK\tSample backend firing up\n";    # print our banner
+print "OK\tBackend firing up\n"; # Print our banner
 
 my $AUTH_DOMAIN=$ENV{'AUTH_DOMAIN'};
 my $CERT_CHALLENGES_FILE=$ENV{'CERT_CHALLENGES_FILE'};
@@ -31,7 +31,7 @@ while(<>)
         next;
     }
 
-    # note! the qname is what PowerDNS asks the backend. It need not be what the internet asked PowerDNS!
+    # NOTE: The qname is what PowerDNS asks the backend. It need not be what the internet asked PowerDNS!
     my ($type,$qname,$qclass,$qtype,$id,$ip)=split(/\t/);
 
     if(($qtype eq "SOA" || $qtype eq "ANY") && $qname =~ $MATCH_AUTH_DOMAIN) {

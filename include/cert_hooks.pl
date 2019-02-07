@@ -4,17 +4,17 @@
 
 use strict;
 
-$|=1;                   # No buffering
+$|=1; # No buffering
 
 my $HOOK=$ARGV[0];
 if ($HOOK eq "startup_hook") {
-    print "Starting dehydrated...";
+    print "Starting dehydrated...\n";
 } elsif ($HOOK eq "deploy_challenge") {
     my $CHALLENGE_DOMAIN=$ARGV[1];
     my $CHALLENGE_TOKEN=$ARGV[3];
     my $CHALLENGE_SUBDOMAIN=$ENV{'CERT_CHALLENGE_SUBDOMAIN'};
 
-    print "Adding the following to the zone definition of $CHALLENGE_DOMAIN:\n";
+    print "Adding the following to the zone definition of '$CHALLENGE_DOMAIN':\n";
     print "$CHALLENGE_SUBDOMAIN.$CHALLENGE_DOMAIN. IN TXT \"$CHALLENGE_TOKEN\"\n";
 
     # Add the token to the file that the PowerDNS pipe backend will read from
@@ -30,7 +30,7 @@ if ($HOOK eq "startup_hook") {
     my $CHALLENGE_TOKEN=$ARGV[3];
     my $CHALLENGE_SUBDOMAIN=$ENV{'CERT_CHALLENGE_SUBDOMAIN'};
 
-    print "Removing the following from the zone definition of $CHALLENGE_DOMAIN:\n";
+    print "Removing the following from the zone definition of '$CHALLENGE_DOMAIN':\n";
     print "$CHALLENGE_SUBDOMAIN.$CHALLENGE_DOMAIN. IN TXT \"$CHALLENGE_TOKEN\"\n";
 
     # Remove the token from the file that the PowerDNS pipe backend reads from
@@ -59,17 +59,50 @@ if ($HOOK eq "startup_hook") {
     my $CHAINFILE=$ARGV[5];
     my $TIMESTAMP=$ARGV[6];
 
-    my $SECRET_NAME=$ENV{'SECRET_NAME'};
-    my $SECRET_NAMESPACE=$ENV{'SECRET_NAMESPACE'};
+    print "Certificate can be deployed...\n";
+    print "Domain: $CHALLENGE_DOMAIN\n";
+    print "Key file: $KEYFILE\n";
+    print "Certificate file: $CERTFILE\n";
+    print "Full chain certificate file: $FULLCHAINFILE\n";
+    print "Chain file: $CHAINFILE\n";
+    print "Timestamp: $TIMESTAMP\n";
 
-    # Create the Kubernetes secret so services can use the cert
-    print "Deploying cert as secret '$SECRET_NAME' to Kubernetes namespace '$SECRET_NAMESPACE'\n";
-    system("kubectl create secret tls $SECRET_NAME --key $KEYFILE --crt $FULLCHAINFILE --dry-run -o yaml | kubectl apply -f -");
+    # Call the deploy-hook
+    print "\n";
+    print "+-------------------+\n";
+    print "| Start deploy-hook |\n";
+    print "+-------------------+\n";
+    system("$ENV{'DEPLOY_HOOK'} \"$CHALLENGE_DOMAIN\" \"$KEYFILE\" \"$CERTFILE\" \"$FULLCHAINFILE\" \"$CHAINFILE\" \"$TIMESTAMP\"");
+    print "+-----------------+\n";
+    print "| End deploy-hook |\n";
+    print "+-----------------+\n";
+    print "\n";
+
+    print "\n";
+} elsif ($HOOK eq "exit_hook") {
+    # Call the post-hook
+    print "\n";
+    print "+-----------------+\n";
+    print "| Start post-hook |\n";
+    print "+-----------------+\n";
+    system("$ENV{'HOOK_POST'} \"$ENV{'CERT_WORKING_DIR'}\"");
+    print "+---------------+\n";
+    print "| End post-hook |\n";
+    print "+---------------+\n";
+    print "\n";
+
     print "\n";
 } elsif ($HOOK eq "unchanged_cert") {
     my $CHALLENGE_DOMAIN=$ARGV[1];
 
     print "Cert unchanged for domain: $CHALLENGE_DOMAIN\n";
+    print "\n";
+} elsif ($HOOK eq "invalid_challenge") {
+    my $ALTERNATIVE_NAME=$ARGV[1];
+    my $RESULT=$ARGV[2];
+
+    print "Invalid challenge for alternative name: $ALTERNATIVE_NAME\n";
+    print "Result:\n$RESULT\n";
     print "\n";
 } else {
     print "Unknown hook \"$HOOK\"\n";

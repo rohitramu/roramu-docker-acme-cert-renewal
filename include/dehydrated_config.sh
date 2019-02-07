@@ -46,10 +46,10 @@ CHALLENGETYPE=dns-01
 #DOMAINS_D=
 
 # Base directory for account key, generated certificates and list of domains (default: $SCRIPTDIR -- uses config directory if undefined)
-#BASEDIR=$SCRIPTDIR
+BASEDIR=$CERT_WORKING_DIR
 
 # File containing the list of domains to request certificates for (default: $BASEDIR/domains.txt)
-DOMAINS_TXT=$DOMAINS_TXT
+DOMAINS_TXT=$CERT_DOMAINS_TXT
 
 # Output directory for generated certificates
 #CERTDIR="${BASEDIR}/certs"
@@ -121,7 +121,7 @@ CONTACT_EMAIL=$CERT_EMAIL
 #CHAINCACHE="${BASEDIR}/chains"
 
 # Automatic cleanup (default: no)
-#AUTO_CLEANUP="no"
+AUTO_CLEANUP="yes"
 
 # ACME API version (default: auto)
 #API=auto

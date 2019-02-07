@@ -51,14 +51,6 @@ RUN echo "" && \
     apk add pdns-backend-pipe && \
     echo "" && \
     echo "" && \
-    echo "+-----------------+" && \
-    echo "| Install kubectl |" && \
-    echo "+-----------------+" && \
-    apk add --update ca-certificates && \
-    curl -L https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl -o /usr/local/bin/kubectl && \
-    chmod +x /usr/local/bin/kubectl && \
-    echo "" && \
-    echo "" && \
     # Clean up
     echo "+--------------------------+" && \
     echo "| Clean build dependencies |" && \
@@ -78,33 +70,44 @@ RUN echo "" && \
     echo ""
 
 # Set environment variable to remember directory of copied files
-ENV WORKING_DIR /usr/local/bin/acme-cert-renewal
+ENV WORKING_DIR=/usr/local/bin/acme-cert-renewal
+WORKDIR $WORKING_DIR
 
 # Copy files
-COPY include/ $WORKING_DIR/
+COPY include/ .
 
 # Make files executable
-RUN find $WORKING_DIR/ -type f -exec chmod +x {} \;
+RUN find ./ -type f -exec chmod +x {} \;
 
 # Expose the DNS port
 EXPOSE 53/tcp
 EXPOSE 53/udp
 
 # Start the entrypoint script (NOTE: keep this path in sync with $WORKING_DIR)
-ENTRYPOINT ["/usr/local/bin/acme-cert-renewal/entrypoint.sh"]
+ENTRYPOINT [ "sh", "-c", "exec ./entrypoint.sh $0 \"$@\"" ]
 
 # Define defaults to the entrypoint script
 CMD [ \
     # Domain to get the certificate for
     "test.com", \
     # Authentication domain (this is where the TXT records will be created)
-    "auth.test.com", \
-    # The name of the Kubernetes TLS secret that will be created
-    "tls-secret", \
-    # The Kubernetes namespace in which to create the TLS secret
-    "default", \
-    # Use the production ACME server? true/false
-    "false", \
+    "auth-test.com", \
+    # ACME server
+    "https://acme-staging-v02.api.letsencrypt.org/directory", \
     # The email address that will be used to register with the ACME server
-    "admin@test.com" \
+    "admin@test.com", \
+    # Deploy-hook command which can be used to deploy certificate files.  It will be passed arguments in the following order:
+    # 1. The domain name on the certificate
+    # 2. Path to key file (privkey.pem)
+    # 3. Path to cert file (cert.pem)
+    # 4. Path to the full chain file (fullchain.pem)
+    # 5. Path to the chain file (chain.pem)
+    "$WORKING_DIR/deploy_hook.pl", \
+    # Pre-hook command which can be used to load files from a previous run (required for renewal).
+    # Files should be placed (preserving the folder structure) into the folder provided as the argument.
+    "ls -R", \
+    # Post-hook command which can be used to save files from this run.
+    # Files should be taken (preserving the folder structure) from the folder provided as the argument.
+    # This is only called if the run was successful.
+    "ls -R" \
 ]

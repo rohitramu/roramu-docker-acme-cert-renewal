@@ -80,22 +80,12 @@ if ($HOOK eq "startup_hook") {
 
     print "\n";
 } elsif ($HOOK eq "exit_hook") {
-    # Call the post-hook
-    print "\n";
-    print "+-----------------+\n";
-    print "| Start post-hook |\n";
-    print "+-----------------+\n";
-    system("$ENV{'HOOK_POST'} \"$ENV{'CERT_WORKING_DIR'}\"");
-    print "+---------------+\n";
-    print "| End post-hook |\n";
-    print "+---------------+\n";
-    print "\n";
-
+    print "Successfully obtained certificate\n";
     print "\n";
 } elsif ($HOOK eq "unchanged_cert") {
     my $CHALLENGE_DOMAIN=$ARGV[1];
 
-    print "Cert unchanged for domain: $CHALLENGE_DOMAIN\n";
+    print "Existing certificate is still valid for domain: $CHALLENGE_DOMAIN\n";
     print "\n";
 } elsif ($HOOK eq "invalid_challenge") {
     my $ALTERNATIVE_NAME=$ARGV[1];

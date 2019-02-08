@@ -83,31 +83,30 @@ RUN find ./ -type f -exec chmod +x {} \;
 EXPOSE 53/tcp
 EXPOSE 53/udp
 
-# Start the entrypoint script (NOTE: keep this path in sync with $WORKING_DIR)
-ENTRYPOINT [ "sh", "-c", "exec ./entrypoint.sh $0 \"$@\"" ]
+# Start the entrypoint script
+ENTRYPOINT [ "sh", "-c", "exec $WORKING_DIR/entrypoint.sh $0 \"$@\"" ]
 
 # Define defaults to the entrypoint script
 CMD [ \
-    # Domain to get the certificate for
+    # The domain that is/will be on the certificate.
+    # A wildcard certificate will be generated, meaning all subdomains are also included.
     "test.com", \
-    # Authentication domain (this is where the TXT records will be created)
+    # Authentication domain (this is where the TXT records will be created).
+    # The authentication domain does not need to be a subdomain of the certificate domain.
     "auth-test.com", \
-    # ACME server
+    # ACME server.  For example, "Let's Encrypt" certificate authority URLs are:
+    #   Staging:    https://acme-staging-v02.api.letsencrypt.org/directory
+    #   Production: https://acme-v02.api.letsencrypt.org/directory
     "https://acme-staging-v02.api.letsencrypt.org/directory", \
     # The email address that will be used to register with the ACME server
     "admin@test.com", \
-    # Deploy-hook command which can be used to deploy certificate files.  It will be passed arguments in the following order:
-    # 1. The domain name on the certificate
-    # 2. Path to key file (privkey.pem)
-    # 3. Path to cert file (cert.pem)
-    # 4. Path to the full chain file (fullchain.pem)
-    # 5. Path to the chain file (chain.pem)
-    "$WORKING_DIR/deploy_hook.pl", \
-    # Pre-hook command which can be used to load files from a previous run (required for renewal).
-    # Files should be placed (preserving the folder structure) into the folder provided as the argument.
-    "ls -R", \
-    # Post-hook command which can be used to save files from this run.
-    # Files should be taken (preserving the folder structure) from the folder provided as the argument.
-    # This is only called if the run was successful.
-    "ls -R" \
-]
+    # Deploy-hook command which can be used to deploy certificate files.
+    # Remember to use RUN commands to install necessary packages.
+    # The given command will be passed arguments in the following order:
+    #   1. The domain name on the certificate
+    #   2. Path to key file (privkey.pem)
+    #   3. Path to cert file (cert.pem)
+    #   4. Path to the full chain file (fullchain.pem)
+    #   5. Path to the chain file (chain.pem)
+    "perl $WORKING_DIR/deploy_hook.pl" \
+    ]

@@ -11,12 +11,34 @@ if [ $SCRIPTPATH != $WORKING_DIR ]; then
 fi
 
 # Arguments
-export DOMAIN=${1:-not.defined.com}
-export AUTH_DOMAIN=${2:-auth-not-defined.com}
-export ACME_SERVER=${3:-https://acme-staging-v02.api.letsencrypt.org/directory}
-export CERT_EMAIL=${4:-admin@not-defined.com}
-export HOOK_DEPLOY=$(eval echo ${5:-$WORKING_DIR/deploy_hook.pl})
+export DOMAIN=$1
+export AUTH_DOMAIN=$2
+export CERT_EMAIL=$3
+export HOOK_DEPLOY=$(eval echo $4)
 
+# Validate arguments
+if [ -z $DOMAIN ]; then
+    echo "ERROR: A domain for the certificate was not specified" >&2
+    exit 1
+fi
+
+if [ -z $AUTH_DOMAIN ]; then
+    echo "ERROR: An authentication domain for the certificate challenge was not specified" >&2
+    exit 1
+fi
+
+if [ -z $CERT_EMAIL ]; then
+    echo "ERROR: An email address for the certificate was not specified" >&2
+    exit 1
+fi
+
+if [ -z $HOOK_DEPLOY ]; then
+    echo "WARNING: A deploy-hook command was not specified" >&2
+    HOOK_DEPLOY=$WORKING_DIR/deploy_hook.pl
+fi
+
+# ACME server (certificate authority)
+export ACME_SERVER=${ACME_SERVER:-https://acme-staging-v02.api.letsencrypt.org/directory}
 # Certificate challenge auth subdomain
 export CERT_CHALLENGE_SUBDOMAIN=${CERT_CHALLENGE_SUBDOMAIN:-_acme-challenge}
 # Certificate challenges environment variable (one challenge token per line)
@@ -31,7 +53,7 @@ export PDNS_HOOKS=$WORKING_DIR/pdns.pl
 export PDNS_LOG=$WORKING_DIR/pdns.log
 
 # Dehydrated working directory
-export CERT_WORKING_DIR=$WORKING_DIR/dehydrated
+export CERT_WORKING_DIR=${CERT_WORKING_DIR:-$WORKING_DIR/dehydrated}
 # Domains file for dehydrated
 export CERT_DOMAINS_TXT=$CERT_WORKING_DIR/domains.txt
 # Cert output directory
@@ -60,7 +82,12 @@ echo "$DOMAIN *.$DOMAIN" > $CERT_DOMAINS_TXT
 echo "" > $CERT_CHALLENGES_FILE
 
 # Start PowerDNS server for ACME DNS-01 auth challenge
-pdns_server --no-config --loglevel=10 --log-dns-queries --log-dns-details --daemon=no --launch=pipe --pipe-command=$PDNS_HOOKS &>$PDNS_LOG &
+pdns_server \
+    --no-config \
+    --loglevel=10 --log-dns-queries --log-dns-details \
+    --daemon=no \
+    --local-address=0.0.0.0 --local-port=53 \
+    --launch=pipe --pipe-command=$PDNS_HOOKS &>$PDNS_LOG &
 PDNS_PID=$!
 
 # Wait for some time in case PowerDNS took longer than usual to start

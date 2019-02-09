@@ -9,6 +9,7 @@ $|=1; # No buffering
 my $HOOK=$ARGV[0];
 if ($HOOK eq "startup_hook") {
     print "Starting dehydrated...\n";
+    print "\n";
 } elsif ($HOOK eq "deploy_challenge") {
     my $CHALLENGE_DOMAIN=$ARGV[1];
     my $CHALLENGE_TOKEN=$ARGV[3];

@@ -1,4 +1,41 @@
+# 
+# +-------+
+# | USAGE |
+# +-------+
+# - Files inside the directory specified by the $CERT_WORKING_DIR environment variable should be persisted between runs (e.g. with volumes).
+# - The ENTRYPOINT command SHOULD NOT be overridden in child images.
+# - Arguments to "docker run" SHOULD be provided in the following order:
+#     1. Domain name for which a certificate should be generated/renewed.
+#     2. Authentication domain, where the DNS challenge will take place (i.e. TXT records are created here).
+#     3. The email address to be included in the certificate.
+#     4. The deploy-hook command.  In most cases, this should be a script which can deploy the generated
+#        certificate given the location of required files.  The file locations will be provided as arguments
+#        to the command in the following order:
+#           1. The domain name on the certificate
+#           2. Path to key file (privkey.pem)
+#           3. Path to cert file (cert.pem)
+#           4. Path to the full chain file (fullchain.pem)
+#           5. Path to the chain file (chain.pem)
+# - The only port required to be open to the internet is port 53 (both TCP and UDP), as the DNS server will
+#   be listening on that port.
+# 
+
 FROM alpine:latest
+
+# WARNING: These environment variables should NOT be overridden by child images.
+# The main working directory
+ENV WORKING_DIR=/usr/local/bin/acme-cert-renewal
+# The certificate working directory, where certs will be stored between runs of this image.
+ENV CERT_WORKING_DIR=$WORKING_DIR/cert_working_dir
+
+# Environment variables that can be set by child images to alter the runtime configuration
+ENV \
+    # Default subdomain that will contain the challenge TXT records
+    CERT_CHALLENGE_SUBDOMAIN=_acme-challenge \
+    # ACME server.  For reference, "Let's Encrypt" v2 certificate authority URLs are:
+    #   Staging:    https://acme-staging-v02.api.letsencrypt.org/directory
+    #   Production: https://acme-v02.api.letsencrypt.org/directory
+    ACME_SERVER=https://acme-staging-v02.api.letsencrypt.org/directory
 
 # Setup environment
 RUN echo "" && \
@@ -69,8 +106,7 @@ RUN echo "" && \
     echo "+------------------------------+" && \
     echo ""
 
-# Set environment variable to remember directory of copied files
-ENV WORKING_DIR=/usr/local/bin/acme-cert-renewal
+# Set working directory
 WORKDIR $WORKING_DIR
 
 # Copy files
@@ -81,9 +117,6 @@ RUN find ./ -type f -exec chmod +x {} \;
 
 # Expose the DNS port
 EXPOSE 53/tcp 53/udp
-
-# Set default subdomain that will contain the challenge TXT records, so it can be overridden in child images if required
-ENV CERT_CHALLENGE_SUBDOMAIN=_acme-challenge
 
 # Start the entrypoint script
 ENTRYPOINT [ "sh", "-c", "exec $WORKING_DIR/entrypoint.sh $0 \"$@\"" ]
@@ -96,10 +129,6 @@ CMD [ \
     # Authentication domain (this is where the TXT records will be created).
     # The authentication domain does not need to be a subdomain of the certificate domain.
     "auth-test.com", \
-    # ACME server.  For example, "Let's Encrypt" certificate authority URLs are:
-    #   Staging:    https://acme-staging-v02.api.letsencrypt.org/directory
-    #   Production: https://acme-v02.api.letsencrypt.org/directory
-    "https://acme-staging-v02.api.letsencrypt.org/directory", \
     # The email address that will be used to register with the ACME server
     "admin@test.com", \
     # Deploy-hook command which can be used to deploy certificate files.

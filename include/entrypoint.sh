@@ -18,7 +18,7 @@ export CERT_EMAIL=${4:-admin@not-defined.com}
 export HOOK_DEPLOY=$(eval echo ${5:-$WORKING_DIR/deploy_hook.pl})
 
 # Certificate challenge auth subdomain
-export CERT_CHALLENGE_SUBDOMAIN=_acme-challenge
+export CERT_CHALLENGE_SUBDOMAIN=${CERT_CHALLENGE_SUBDOMAIN:-_acme-challenge}
 # Certificate challenges environment variable (one challenge token per line)
 export CERT_CHALLENGES_FILE=$WORKING_DIR/cert_challenges.txt
 # Cert hooks command for dehydrated
@@ -56,12 +56,15 @@ mkdir -p $CERT_WORKING_DIR
 # Write domains.txt
 echo "$DOMAIN *.$DOMAIN" > $CERT_DOMAINS_TXT
 
+# Write cert_challenges.txt
+echo "" > $CERT_CHALLENGES_FILE
+
 # Start PowerDNS server for ACME DNS-01 auth challenge
-nohup pdns_server --no-config --daemon=no --local-address=0.0.0.0 --local-port=53 --launch=pipe --pipe-command=$PDNS_HOOKS &>$PDNS_LOG &
+pdns_server --no-config --loglevel=10 --log-dns-queries --log-dns-details --daemon=no --launch=pipe --pipe-command=$PDNS_HOOKS &>$PDNS_LOG &
 PDNS_PID=$!
 
 # Wait for some time in case PowerDNS took longer than usual to start
-sleep 5
+sleep 3
 
 # Print out the startup log of PowerDNS
 echo ""

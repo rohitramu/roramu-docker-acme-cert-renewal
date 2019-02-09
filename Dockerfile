@@ -76,12 +76,14 @@ WORKDIR $WORKING_DIR
 # Copy files
 COPY include/ .
 
-# Make files executable
+# Make included files executable
 RUN find ./ -type f -exec chmod +x {} \;
 
 # Expose the DNS port
-EXPOSE 53/tcp
-EXPOSE 53/udp
+EXPOSE 53/tcp 53/udp
+
+# Set default subdomain that will contain the challenge TXT records, so it can be overridden in child images if required
+ENV CERT_CHALLENGE_SUBDOMAIN=_acme-challenge
 
 # Start the entrypoint script
 ENTRYPOINT [ "sh", "-c", "exec $WORKING_DIR/entrypoint.sh $0 \"$@\"" ]

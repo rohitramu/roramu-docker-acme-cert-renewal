@@ -17,9 +17,10 @@ unless($line eq "HELO\t1") {
 }
 print "OK\tBackend firing up\n"; # Print our banner
 
-my $AUTH_DOMAIN = $ENV{'AUTH_DOMAIN'};
+# Get all arguments (and use lowercase for domain names to keep it case-insensitive)
+my $AUTH_DOMAIN = lc $ENV{'AUTH_DOMAIN'};
 my $CERT_CHALLENGES_FILE = $ENV{'CERT_CHALLENGES_FILE'};
-my $CERT_CHALLENGE_DOMAIN = "$ENV{'CERT_CHALLENGE_SUBDOMAIN'}.$AUTH_DOMAIN";
+my $CERT_CHALLENGE_DOMAIN = lc "$ENV{'CERT_CHALLENGE_SUBDOMAIN'}.$AUTH_DOMAIN";
 my $MATCH_AUTH_DOMAIN = "^(.+\\.)?$AUTH_DOMAIN(\\.)?\$";
 
 while(<STDIN>)
@@ -35,6 +36,10 @@ while(<STDIN>)
 
     # NOTE: The qname is what PowerDNS asks the backend. It need not be what the internet asked PowerDNS!
     my ($type,$qname,$qclass,$qtype,$id,$ip) = @arr;
+
+    # Make the query case insensitive by converting the qname to lowercase and qtype to uppercase
+    $qname = lc $qname;
+    $qtype = uc $qtype;
 
     if (($qtype eq "SOA" || $qtype eq "ANY") && $qname =~ m/$MATCH_AUTH_DOMAIN/) {
         my $result = "DATA\t$qname\t$qclass\tSOA\t3600\t-1\t$AUTH_DOMAIN $AUTH_DOMAIN 2008080300 1800 3600 604800 3600\n";

@@ -26,7 +26,7 @@ if ($HOOK eq "startup_hook") {
 
     # Wait here for user input if debug mode is turned on
     if (chomp($ENV{'DEBUG'}) ne '') {
-        print "Press <enter> to continue...\n";
+        print "Debug mode is on - press <enter> to continue...\n";
         my $tmp = <STDIN>;
     }
 
@@ -57,7 +57,7 @@ if ($HOOK eq "startup_hook") {
 
     # Wait here for user input if debug mode is turned on
     if (chomp($ENV{'DEBUG'}) ne '') {
-        print "Press <enter> to continue...\n";
+        print "Debug mode is on - press <enter> to continue...\n";
         my $tmp = <STDIN>;
     }
 

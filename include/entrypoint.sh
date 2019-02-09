@@ -48,7 +48,7 @@ export CERT_HOOKS=$WORKING_DIR/cert_hooks.pl
 # Config file for dehydrated
 export DEHYDRATED_CONFIG=$WORKING_DIR/dehydrated_config.sh
 # PowerDNS hooks
-export PDNS_HOOKS=$WORKING_DIR/pdns.pl
+export PDNS_HOOKS=$WORKING_DIR/pdns_backend.pl
 # PowerDNS log file
 export PDNS_LOG=$WORKING_DIR/pdns.log
 
@@ -110,8 +110,9 @@ if ! kill -s 0 $PDNS_PID; then
     exit 1
 fi
 
+# Allow user to continue when ready if debug mode is on
 if ! [ -z "$DEBUG" ]; then
-    echo "Starting shell... run 'exit' to continue, or 'exit 1' to stop"
+    echo "Debug mode is on - starting shell... run 'exit' to continue, or 'exit 1' to stop"
     sh
     if [ $? -ne 0 ]; then
         exit $?
@@ -143,6 +144,12 @@ echo "+--------------------------------+"
 echo "| End generate/renew certificate |"
 echo "+--------------------------------+"
 echo ""
+
+# If debug mode is on, don't quit - print PowerDNS log output so requests/responses can be monitored
+if ! [ -z "$DEBUG" ]; then
+    echo "Debug mode is on - PowerDNS will continue to run and log output will be shown below..."
+    tail -f $PDNS_LOG
+fi
 
 # Kill the PowerDNS server
 kill $PDNS_PID

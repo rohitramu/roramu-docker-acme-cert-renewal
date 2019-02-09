@@ -24,7 +24,12 @@ if ($HOOK eq "startup_hook") {
     print $fh "$CHALLENGE_TOKEN\n";
     close $fh;
 
-    #my $tmp = <STDIN>;
+    # Wait here for user input if debug mode is turned on
+    if (chomp($ENV{'DEBUG'}) ne '') {
+        print "Press <enter> to continue...\n";
+        my $tmp = <STDIN>;
+    }
+
     print "\n";
 } elsif ($HOOK eq "clean_challenge") {
     my $CHALLENGE_DOMAIN=$ARGV[1];
@@ -50,7 +55,12 @@ if ($HOOK eq "startup_hook") {
     }
     close $fhWrite;
 
-    #my $tmp = <STDIN>;
+    # Wait here for user input if debug mode is turned on
+    if (chomp($ENV{'DEBUG'}) ne '') {
+        print "Press <enter> to continue...\n";
+        my $tmp = <STDIN>;
+    }
+
     print "\n";
 } elsif ($HOOK eq "deploy_cert") {
     my $CHALLENGE_DOMAIN=$ARGV[1];

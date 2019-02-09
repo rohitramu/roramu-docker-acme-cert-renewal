@@ -11,30 +11,30 @@ if [ $SCRIPTPATH != $WORKING_DIR ]; then
 fi
 
 # Arguments
-export DOMAIN=$1
-export AUTH_DOMAIN=$2
-export CERT_EMAIL=$3
-export HOOK_DEPLOY=$(eval echo $4)
+export DOMAIN=$DOMAIN
+export AUTH_DOMAIN=$AUTH_DOMAIN
+export CERT_EMAIL=$CERT_EMAIL
+export HOOK_DEPLOY=$HOOK_DEPLOY
 
 # Validate arguments
-if [ -z $DOMAIN ]; then
+if [ -z "$DOMAIN" ]; then
     echo "ERROR: A domain for the certificate was not specified" >&2
     exit 1
 fi
 
-if [ -z $AUTH_DOMAIN ]; then
+if [ -z "$AUTH_DOMAIN" ]; then
     echo "ERROR: An authentication domain for the certificate challenge was not specified" >&2
     exit 1
 fi
 
-if [ -z $CERT_EMAIL ]; then
+if [ -z "$CERT_EMAIL" ]; then
     echo "ERROR: An email address for the certificate was not specified" >&2
     exit 1
 fi
 
-if [ -z $HOOK_DEPLOY ]; then
-    echo "WARNING: A deploy-hook command was not specified" >&2
+if [ -z "$HOOK_DEPLOY" ]; then
     HOOK_DEPLOY=$WORKING_DIR/deploy_hook.pl
+    echo "WARNING: A deploy-hook command was not specified... defaulting to: '$HOOK_DEPLOY'" >&2
 fi
 
 # ACME server (certificate authority)
@@ -108,6 +108,14 @@ echo ""
 if ! kill -s 0 $PDNS_PID; then
     echo "Failed to start PowerDNS" >&2
     exit 1
+fi
+
+if ! [ -z "$DEBUG" ]; then
+    echo "Starting shell... run 'exit' to continue, or 'exit 1' to stop"
+    sh
+    if [ $? -ne 0 ]; then
+        exit $?
+    fi
 fi
 
 # If we didn't have any account info, register an account with the ACME server

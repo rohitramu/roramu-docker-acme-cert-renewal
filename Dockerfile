@@ -1,4 +1,4 @@
-# 
+#
 # +-------+
 # | USAGE |
 # +-------+
@@ -18,7 +18,7 @@
 #           5. Path to the chain file (chain.pem)
 # - The only port required to be open to the internet is port 53 (both TCP and UDP), as the DNS server will
 #   be listening on that port.
-# 
+#
 
 FROM alpine:latest
 
@@ -28,14 +28,36 @@ ENV WORKING_DIR=/usr/local/bin/acme-cert-renewal
 # The certificate working directory, where certs will be stored between runs of this image.
 ENV CERT_WORKING_DIR=$WORKING_DIR/cert_working_dir
 
-# Environment variables that can be set by child images to alter the runtime configuration
+# Environment variables that can be set to alter the runtime configuration
 ENV \
+    # Set $DEBUG to any non-empty value to turn on debug mode
+    DEBUG= \
     # Default subdomain that will contain the challenge TXT records
     CERT_CHALLENGE_SUBDOMAIN=_acme-challenge \
     # ACME server.  For reference, "Let's Encrypt" v2 certificate authority URLs are:
     #   Staging:    https://acme-staging-v02.api.letsencrypt.org/directory
     #   Production: https://acme-v02.api.letsencrypt.org/directory
     ACME_SERVER=https://acme-staging-v02.api.letsencrypt.org/directory
+
+# Environment variables that SHOULD be set by users at runtime
+ENV \
+    # The domain that is/will be on the certificate.
+    # A wildcard certificate will be generated, meaning all subdomains are also included.
+    DOMAIN= \
+    # Authentication domain (this is where the TXT records will be created).
+    # The authentication domain does not need to be a subdomain of the certificate domain.
+    AUTH_DOMAIN= \
+    # The email address that will be used to register with the ACME server
+    CERT_EMAIL= \
+    # Deploy-hook command which can be used to deploy certificate files.
+    # Remember to use RUN commands to install necessary packages.
+    # The given command will be passed arguments in the following order:
+    #   1. The domain name on the certificate
+    #   2. Path to key file (privkey.pem)
+    #   3. Path to cert file (cert.pem)
+    #   4. Path to the full chain file (fullchain.pem)
+    #   5. Path to the chain file (chain.pem)
+    HOOK_DEPLOY=
 
 # Setup environment
 RUN echo "" && \
@@ -119,25 +141,4 @@ RUN find ./ -type f -exec chmod +x {} \;
 EXPOSE 53/tcp 53/udp
 
 # Start the entrypoint script
-ENTRYPOINT [ "sh", "-c", "exec $WORKING_DIR/entrypoint.sh $0 \"$@\"" ]
-
-# Define defaults to the entrypoint script
-CMD [ \
-    # The domain that is/will be on the certificate.
-    # A wildcard certificate will be generated, meaning all subdomains are also included.
-    "test.com", \
-    # Authentication domain (this is where the TXT records will be created).
-    # The authentication domain does not need to be a subdomain of the certificate domain.
-    "auth-test.com", \
-    # The email address that will be used to register with the ACME server
-    "admin@test.com", \
-    # Deploy-hook command which can be used to deploy certificate files.
-    # Remember to use RUN commands to install necessary packages.
-    # The given command will be passed arguments in the following order:
-    #   1. The domain name on the certificate
-    #   2. Path to key file (privkey.pem)
-    #   3. Path to cert file (cert.pem)
-    #   4. Path to the full chain file (fullchain.pem)
-    #   5. Path to the chain file (chain.pem)
-    "perl $WORKING_DIR/deploy_hook.pl" \
-    ]
+ENTRYPOINT $WORKING_DIR/entrypoint.sh

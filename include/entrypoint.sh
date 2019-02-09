@@ -63,12 +63,12 @@ export ACCOUNTS_DIR=$CERT_WORKING_DIR/accounts
 
 echo ""
 echo "========="
-echo "Certificate will be generated for domain (and subdomains under): $DOMAIN"
-echo "Authentication domain: $AUTH_DOMAIN"
-echo "ACME challenge domain: $CERT_CHALLENGE_SUBDOMAIN"
-echo "ACME server: $ACME_SERVER"
-echo "ACME registration email address: $CERT_EMAIL"
-echo "Deploy-hook: $HOOK_DEPLOY"
+echo "Certificate domain:       $DOMAIN"
+echo "Authentication domain:    $AUTH_DOMAIN"
+echo "ACME challenge domain:    $CERT_CHALLENGE_SUBDOMAIN"
+echo "ACME server:              $ACME_SERVER"
+echo "Cert email address:       $CERT_EMAIL"
+echo "Deploy-hook:              $HOOK_DEPLOY"
 echo "========="
 echo ""
 

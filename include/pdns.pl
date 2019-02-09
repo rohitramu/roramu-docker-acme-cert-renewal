@@ -34,7 +34,7 @@ while(<STDIN>)
     }
 
     # NOTE: The qname is what PowerDNS asks the backend. It need not be what the internet asked PowerDNS!
-    my ($type,$qname,$qclass,$qtype,$id,$ip) = split(/\t/);
+    my ($type,$qname,$qclass,$qtype,$id,$ip) = @arr;
 
     if (($qtype eq "SOA" || $qtype eq "ANY") && $qname =~ m/$MATCH_AUTH_DOMAIN/) {
         my $result = "DATA\t$qname\t$qclass\tSOA\t3600\t-1\t$AUTH_DOMAIN $AUTH_DOMAIN 2008080300 1800 3600 604800 3600\n";

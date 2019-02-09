@@ -147,3 +147,14 @@ echo ""
 # Kill the PowerDNS server
 kill $PDNS_PID
 echo "Stopped PowerDNS server"
+
+# Print out the complete runtime log of PowerDNS
+echo ""
+echo "+--------------------+"
+echo "| Start PowerDNS log |"
+echo "+--------------------+"
+cat $PDNS_LOG
+echo "+------------------+"
+echo "| End PowerDNS log |"
+echo "+------------------+"
+echo ""

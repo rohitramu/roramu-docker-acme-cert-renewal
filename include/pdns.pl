@@ -50,15 +50,25 @@ while(<STDIN>)
         open(my $fh, '<', $CERT_CHALLENGES_FILE) or die "Could not open file '$CERT_CHALLENGES_FILE' $!";
         my @CERT_CHALLENGE_TOKENS = <$fh>;
         close $fh;
-        chomp @CERT_CHALLENGE_TOKENS;
 
-        foreach (@CERT_CHALLENGE_TOKENS) {
-            if ($_ ne "") {
-                my $result = "DATA\t$qname\t$qclass\tTXT\t1\t-1\t\"$_\"\n";
-                print STDERR "Returned: $result";
-                print $result;
-            }
+        # Trim whitespace from each line
+        chomp @CERT_CHALLENGE_TOKENS;
+        # Remove empty lines
+        @CERT_CHALLENGE_TOKENS = grep { $_ ne '' } @CERT_CHALLENGE_TOKENS;
+
+        # Check if there are no challenge tokens
+        if (scalar(@CERT_CHALLENGE_TOKENS) == 0) {
+            # Send a standard response which indicates that no challenge tokens were found
+            push @CERT_CHALLENGE_TOKENS, "NO_CHALLENGE_TOKENS_FOUND";
         }
+
+        # Send the challenge tokens
+        foreach (@CERT_CHALLENGE_TOKENS) {
+            my $result = "DATA\t$qname\t$qclass\tTXT\t1\t-1\t\"$_\"\n";
+            print STDERR "Returned: $result";
+            print $result;
+        }
+    
     }
 
     print STDERR "$$ End of data\n";

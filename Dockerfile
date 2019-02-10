@@ -1,21 +1,23 @@
 #
 # +-------+
-# | USAGE |
+# | Usage |
 # +-------+
-# - Files inside the directory specified by the $CERT_WORKING_DIR environment variable should be persisted between runs (e.g. with volumes).
+# - Files inside the directory specified by the $CERT_WORKING_DIR environment variable should be persisted
+#   between runs, even if each run is for a different domain.  The method by which this is done is left up
+#   to the user.  One example implementation is using a docker volume mounted to $CERT_WORKING_DIR.
 # - The ENTRYPOINT command SHOULD NOT be overridden in child images.
 # - Arguments to "docker run" SHOULD be provided in the following order:
-#     1. Domain name for which a certificate should be generated/renewed.
-#     2. Authentication domain, where the DNS challenge will take place (i.e. TXT records are created here).
-#     3. The email address to be included in the certificate.
-#     4. The deploy-hook command.  In most cases, this should be a script which can deploy the generated
-#        certificate given the location of required files.  The file locations will be provided as arguments
-#        to the command in the following order:
-#           1. The domain name on the certificate
-#           2. Path to key file (privkey.pem)
-#           3. Path to cert file (cert.pem)
-#           4. Path to the full chain file (fullchain.pem)
-#           5. Path to the chain file (chain.pem)
+#       1. Domain name for which a certificate should be generated/renewed.
+#       2. Authentication domain, where the DNS challenge will take place (i.e. TXT records are created here).
+#       3. The email address to be included in the certificate.
+#       4. The deploy-hook command.  In most cases, this should be a script which can deploy the generated
+#          certificate given the location of required files.  The file locations will be provided as arguments
+#          to the command in the following order:
+#              1. The domain name on the certificate
+#              2. Path to key file (privkey.pem)
+#              3. Path to cert file (cert.pem)
+#              4. Path to the full chain file (fullchain.pem)
+#              5. Path to the chain file (chain.pem)
 # - The only port required to be open to the internet is port 53 (both TCP and UDP), as the DNS server will
 #   be listening on that port.
 #
@@ -23,10 +25,11 @@
 FROM alpine:latest
 
 # WARNING: These environment variables should NOT be overridden by child images.
-# The main working directory
-ENV WORKING_DIR=/usr/local/bin/acme-cert-renewal
-# The certificate working directory, where certs will be stored between runs of this image.
-ENV CERT_WORKING_DIR=$WORKING_DIR/cert_working_dir
+ENV \
+    # The main working directory
+    WORKING_DIR=/usr/local/bin/acme-cert-renewal \
+    # The certificate working directory, where certs will be stored between runs of this image.
+    CERT_WORKING_DIR=/usr/local/etc/acme-cert-renewal
 
 # Environment variables that can be set to alter the runtime configuration
 ENV \

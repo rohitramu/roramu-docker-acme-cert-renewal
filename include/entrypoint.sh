@@ -63,6 +63,8 @@ export ACCOUNTS_DIR=$CERT_WORKING_DIR/accounts
 
 echo ""
 echo "========="
+echo "Working directory:        $WORKING_DIR"
+echo "Cert working directory:   $CERT_WORKING_DIR"
 echo "Certificate domain:       $DOMAIN"
 echo "Authentication domain:    $AUTH_DOMAIN"
 echo "ACME challenge domain:    $CERT_CHALLENGE_SUBDOMAIN"

@@ -4,16 +4,16 @@
 
 use strict;
 
-$|=1; # No buffering
+$| = 1; # No buffering
 
-my $HOOK=$ARGV[0];
+my $HOOK = $ARGV[0];
 if ($HOOK eq "startup_hook") {
     print "Starting dehydrated...\n";
     print "\n";
 } elsif ($HOOK eq "deploy_challenge") {
-    my $CHALLENGE_DOMAIN=$ARGV[1];
-    my $CHALLENGE_TOKEN=$ARGV[3];
-    my $CHALLENGE_SUBDOMAIN=$ENV{'CERT_CHALLENGE_SUBDOMAIN'};
+    my $CHALLENGE_DOMAIN = $ARGV[1];
+    my $CHALLENGE_TOKEN = $ARGV[3];
+    my $CHALLENGE_SUBDOMAIN = $ENV{'CERT_CHALLENGE_SUBDOMAIN'};
 
     print "Adding the following to the zone definition of '$CHALLENGE_DOMAIN':\n";
     print "$CHALLENGE_SUBDOMAIN.$CHALLENGE_DOMAIN. IN TXT \"$CHALLENGE_TOKEN\"\n";
@@ -32,9 +32,9 @@ if ($HOOK eq "startup_hook") {
 
     print "\n";
 } elsif ($HOOK eq "clean_challenge") {
-    my $CHALLENGE_DOMAIN=$ARGV[1];
-    my $CHALLENGE_TOKEN=$ARGV[3];
-    my $CHALLENGE_SUBDOMAIN=$ENV{'CERT_CHALLENGE_SUBDOMAIN'};
+    my $CHALLENGE_DOMAIN = $ARGV[1];
+    my $CHALLENGE_TOKEN = $ARGV[3];
+    my $CHALLENGE_SUBDOMAIN = $ENV{'CERT_CHALLENGE_SUBDOMAIN'};
 
     print "Removing the following from the zone definition of '$CHALLENGE_DOMAIN':\n";
     print "$CHALLENGE_SUBDOMAIN.$CHALLENGE_DOMAIN. IN TXT \"$CHALLENGE_TOKEN\"\n";
@@ -63,14 +63,17 @@ if ($HOOK eq "startup_hook") {
 
     print "\n";
 } elsif ($HOOK eq "deploy_cert") {
-    my $CHALLENGE_DOMAIN=$ARGV[1];
-    my $KEYFILE=$ARGV[2];
-    my $CERTFILE=$ARGV[3];
-    my $FULLCHAINFILE=$ARGV[4];
-    my $CHAINFILE=$ARGV[5];
-    my $TIMESTAMP=$ARGV[6];
+    my $CHALLENGE_DOMAIN = $ARGV[1];
+    my $KEYFILE = $ARGV[2];
+    my $CERTFILE = $ARGV[3];
+    my $FULLCHAINFILE = $ARGV[4];
+    my $CHAINFILE = $ARGV[5];
+    my $TIMESTAMP = $ARGV[6];
+
+    my $DEPLOY_HOOK = $ENV{'DEPLOY_HOOK'};
 
     print "Certificate can be deployed...\n";
+    print "Deploy hook: $DEPLOY_HOOK\n";
     print "Domain: $CHALLENGE_DOMAIN\n";
     print "Key file: $KEYFILE\n";
     print "Certificate file: $CERTFILE\n";
@@ -83,7 +86,7 @@ if ($HOOK eq "startup_hook") {
     print "+-------------------+\n";
     print "| Start deploy-hook |\n";
     print "+-------------------+\n";
-    system("$ENV{'DEPLOY_HOOK'} \"$CHALLENGE_DOMAIN\" \"$KEYFILE\" \"$CERTFILE\" \"$FULLCHAINFILE\" \"$CHAINFILE\" \"$TIMESTAMP\"");
+    system("$DEPLOY_HOOK \"$CHALLENGE_DOMAIN\" \"$KEYFILE\" \"$CERTFILE\" \"$FULLCHAINFILE\" \"$CHAINFILE\" \"$TIMESTAMP\"");
     print "+-----------------+\n";
     print "| End deploy-hook |\n";
     print "+-----------------+\n";
@@ -94,13 +97,13 @@ if ($HOOK eq "startup_hook") {
     print "Successfully obtained certificate\n";
     print "\n";
 } elsif ($HOOK eq "unchanged_cert") {
-    my $CHALLENGE_DOMAIN=$ARGV[1];
+    my $CHALLENGE_DOMAIN = $ARGV[1];
 
     print "Existing certificate is still valid for domain: $CHALLENGE_DOMAIN\n";
     print "\n";
 } elsif ($HOOK eq "invalid_challenge") {
-    my $ALTERNATIVE_NAME=$ARGV[1];
-    my $RESULT=$ARGV[2];
+    my $ALTERNATIVE_NAME = $ARGV[1];
+    my $RESULT = $ARGV[2];
 
     print "Invalid challenge for alternative name: $ALTERNATIVE_NAME\n";
     print "Result:\n$RESULT\n";

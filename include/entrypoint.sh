@@ -14,7 +14,7 @@ fi
 export DOMAIN=$DOMAIN
 export AUTH_DOMAIN=$AUTH_DOMAIN
 export CERT_EMAIL=$CERT_EMAIL
-export HOOK_DEPLOY=$HOOK_DEPLOY
+export DEPLOY_HOOK=$DEPLOY_HOOK
 
 # Validate arguments
 if [ -z "$DOMAIN" ]; then
@@ -32,9 +32,9 @@ if [ -z "$CERT_EMAIL" ]; then
     exit 1
 fi
 
-if [ -z "$HOOK_DEPLOY" ]; then
-    HOOK_DEPLOY=$WORKING_DIR/deploy_hook.pl
-    echo "WARNING: A deploy-hook command was not specified... defaulting to: '$HOOK_DEPLOY'" >&2
+if [ -z "$DEPLOY_HOOK" ]; then
+    DEPLOY_HOOK=$WORKING_DIR/deploy_hook.pl
+    echo "WARNING: A deploy-hook command was not specified... defaulting to: '$DEPLOY_HOOK'" >&2
 fi
 
 # ACME server (certificate authority)
@@ -68,7 +68,7 @@ echo "Authentication domain:    $AUTH_DOMAIN"
 echo "ACME challenge domain:    $CERT_CHALLENGE_SUBDOMAIN"
 echo "ACME server:              $ACME_SERVER"
 echo "Cert email address:       $CERT_EMAIL"
-echo "Deploy-hook:              $HOOK_DEPLOY"
+echo "Deploy-hook:              $DEPLOY_HOOK"
 echo "========="
 echo ""
 

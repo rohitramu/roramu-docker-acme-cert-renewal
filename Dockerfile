@@ -57,7 +57,7 @@ ENV \
     #   3. Path to cert file (cert.pem)
     #   4. Path to the full chain file (fullchain.pem)
     #   5. Path to the chain file (chain.pem)
-    HOOK_DEPLOY=
+    DEPLOY_HOOK=
 
 # Setup environment
 RUN echo "" && \

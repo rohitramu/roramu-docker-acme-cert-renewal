@@ -4,7 +4,7 @@
 
 use strict;
 
-$|=1; # No buffering
+$| = 1; # No buffering
 
 my $line=<>;
 chomp($line);

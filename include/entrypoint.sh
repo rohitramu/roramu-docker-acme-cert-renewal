@@ -29,13 +29,7 @@ if [ $SCRIPTPATH != $WORKING_DIR ]; then
     exit 1
 fi
 
-# Arguments
-export DOMAIN=$DOMAIN
-export AUTH_DOMAIN=$AUTH_DOMAIN
-export CERT_EMAIL=$CERT_EMAIL
-export DEPLOY_HOOK=$DEPLOY_HOOK
-
-# Validate arguments
+# Validate user-provided environment variables
 if [ -z "$DOMAIN" ]; then
     echo "ERROR: A domain for the certificate was not specified" >&2
     exit 1
@@ -54,6 +48,23 @@ fi
 if [ -z "$DEPLOY_HOOK" ]; then
     DEPLOY_HOOK=$WORKING_DIR/deploy_hook.pl
     echo "WARNING: A deploy-hook command was not specified... defaulting to: '$DEPLOY_HOOK'"
+fi
+
+if [ -z "$LOAD_HOOK" ] || [ -z "$SAVE_HOOK" ]; then
+    LOAD_HOOK=$WORKING_DIR/load_hook.sh
+    SAVE_HOOK=$WORKING_DIR/save_hook.sh
+
+    if [ -z "$LOAD_HOOK" ]; then
+        echo "WARNING: A load-hook command was not specified... defaulting to: '$LOAD_HOOK'"
+    else
+        echo "WARNING: A load-hook command was found, but no save-hook was specified... defaulting to: '$LOAD_HOOK'"
+    fi
+
+    if [ -z "$SAVE_HOOK" ]; then
+        echo "WARNING: A save-hook command was not specified... defaulting to: '$SAVE_HOOK'"
+    else
+        echo "WARNING: A save-hook command was found, but no load-hook was specified... defaulting to: '$SAVE_HOOK'"
+    fi
 fi
 
 # ACME server (certificate authority)
@@ -83,8 +94,7 @@ export ACCOUNTS_DIR=$TEMP_CERT_WORKING_DIR/accounts
 echo ""
 echo "========="
 echo "Working directory:            $WORKING_DIR"
-echo "Cert working directory:       $CERT_WORKING_DIR"
-echo "Temp working directory:       $TEMP_CERT_WORKING_DIR"
+echo "Persisted directory:          $CERT_WORKING_DIR"
 echo ""
 echo "Certificate domain:           $DOMAIN"
 echo "Authentication domain:        $AUTH_DOMAIN"
@@ -97,22 +107,33 @@ echo "Deploy-hook:                  $DEPLOY_HOOK"
 echo "========="
 echo ""
 
-# Create CERT_WORKING_DIR if it doesn't exist
+# Create $CERT_WORKING_DIR if it doesn't exist
 mkdir -p $CERT_WORKING_DIR
+
+# Load persisted data to the directory
+echo ""
+echo "+-----------------+"
+echo "| Start load-hook |"
+echo "+-----------------+"
+$LOAD_HOOK "$CERT_WORKING_DIR"
+echo "+---------------+"
+echo "| End load-hook |"
+echo "+---------------+"
+echo ""
 
 # Make sure the temp directory exists and is empty
 mkdir -p $TEMP_CERT_WORKING_DIR
 rm -rf $TEMP_CERT_WORKING_DIR/*
 
-# Copy contents of $CERT_WORKING_DIR to $TEMP_CERT_WORKING_DIR
+# Copy contents of $CERT_WORKING_DIR to $TEMP_CERT_WORKING_DIR, resolving all symlinks
 echo ""
-echo "+---------------------+"
-echo "| Start copy cert dir |"
-echo "+---------------------+"
+echo "+-------------------------+"
+echo "| Start copy loaded files |"
+echo "+-------------------------+"
 cp -LTR --verbose $CERT_WORKING_DIR $TEMP_CERT_WORKING_DIR/
-echo "+-------------------+"
-echo "| End copy cert dir |"
-echo "+-------------------+"
+echo "+-----------------------+"
+echo "| End copy loaded files |"
+echo "+-----------------------+"
 echo ""
 
 # Write domains.txt
@@ -192,15 +213,26 @@ find $TEMP_CERT_WORKING_DIR -type d -empty -delete
 # Clear the output directory
 rm -rf $CERT_WORKING_DIR/*
 
-# Copy contents of $TEMP_CERT_WORKING_DIR to $CERT_WORKING_DIR
+# Copy contents of $TEMP_CERT_WORKING_DIR to $CERT_WORKING_DIR, resolving all symlinks
 echo ""
-echo "+---------------------+"
-echo "| Start copy temp dir |"
-echo "+---------------------+"
+echo "+------------------------------+"
+echo "| Start copy files to be saved |"
+echo "+------------------------------+"
 cp -LTR --verbose $TEMP_CERT_WORKING_DIR $CERT_WORKING_DIR/
-echo "+-------------------+"
-echo "| End copy temp dir |"
-echo "+-------------------+"
+echo "+----------------------------+"
+echo "| End copy files to be saved |"
+echo "+----------------------------+"
+echo ""
+
+# Call the save-hook to persist the directory's contents
+echo ""
+echo "+-----------------+"
+echo "| Start save-hook |"
+echo "+-----------------+"
+$SAVE_HOOK "$CERT_WORKING_DIR"
+echo "+---------------+"
+echo "| End save-hook |"
+echo "+---------------+"
 echo ""
 
 # Print out the complete runtime log of PowerDNS

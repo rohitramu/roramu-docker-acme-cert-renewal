@@ -83,13 +83,9 @@ if ($HOOK eq "startup_hook") {
 
     # Call the deploy-hook
     print "\n";
-    print "+-------------------+\n";
-    print "| Start deploy-hook |\n";
-    print "+-------------------+\n";
+    print "== Start deploy-hook ==\n";
     system("$DEPLOY_HOOK \"$CHALLENGE_DOMAIN\" \"$KEYFILE\" \"$CERTFILE\" \"$FULLCHAINFILE\" \"$CHAINFILE\" \"$TIMESTAMP\"");
-    print "+-----------------+\n";
-    print "| End deploy-hook |\n";
-    print "+-----------------+\n";
+    print "== End deploy-hook ==\n";
     print "\n";
 
     print "\n";

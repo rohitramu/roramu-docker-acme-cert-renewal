@@ -225,6 +225,7 @@ echo "+------------------------------+"
 echo "| Start copy files to be saved |"
 echo "+------------------------------+"
 cp -LTR --verbose $TEMP_CERT_WORKING_DIR $CERT_WORKING_DIR/
+cp -LT --verbose $PDNS_LOG $CERT_WORKING_DIR/${PDNS_LOG##*/}
 echo "+----------------------------+"
 echo "| End copy files to be saved |"
 echo "+----------------------------+"

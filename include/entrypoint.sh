@@ -30,6 +30,16 @@ if [ $SCRIPTPATH != $WORKING_DIR ]; then
 fi
 
 # Validate user-provided environment variables
+if [ -z "$ACME_SERVER" ]; then
+    echo "ERROR: An ACME server URL was not specified" >&2
+    exit 1
+fi
+
+if [ -z "$CERT_CHALLENGE_SUBDOMAIN" ]; then
+    echo "ERROR: An ACME challenge subdomain was not specified" >&2
+    exit 1
+fi
+
 if [ -z "$DOMAIN" ]; then
     echo "ERROR: A domain for the certificate was not specified" >&2
     exit 1
@@ -67,16 +77,14 @@ if [ -z "$LOAD_HOOK" ] || [ -z "$SAVE_HOOK" ]; then
     fi
 fi
 
-# ACME server (certificate authority)
-export ACME_SERVER=${ACME_SERVER:-https://acme-staging-v02.api.letsencrypt.org/directory}
-# Certificate challenge auth subdomain
-export CERT_CHALLENGE_SUBDOMAIN=${CERT_CHALLENGE_SUBDOMAIN:-_acme-challenge}
 # Certificate challenges environment variable (one challenge token per line)
 export CERT_CHALLENGES_FILE=$WORKING_DIR/cert_challenges.txt
 # Cert hooks command for dehydrated
 export CERT_HOOKS=$WORKING_DIR/cert_hooks.pl
 # Config file for dehydrated
 export DEHYDRATED_CONFIG=$WORKING_DIR/dehydrated_config.sh
+# Domains file for dehydrated
+export CERT_DOMAINS_TXT=$WORKING_DIR/domains.txt
 # PowerDNS hooks
 export PDNS_HOOKS=$WORKING_DIR/pdns_backend.pl
 # PowerDNS log file
@@ -84,8 +92,6 @@ export PDNS_LOG=$WORKING_DIR/pdns.log
 
 # Temp dehydrated working directory
 export TEMP_CERT_WORKING_DIR=$WORKING_DIR/dehydrated
-# Domains file for dehydrated
-export CERT_DOMAINS_TXT=$WORKING_DIR/domains.txt
 # Cert output directory
 export CERT_DIR=$TEMP_CERT_WORKING_DIR/certs/$DOMAIN
 # Account output directory
@@ -98,7 +104,7 @@ echo "Persisted directory:          $CERT_WORKING_DIR"
 echo ""
 echo "Certificate domain:           $DOMAIN"
 echo "Authentication domain:        $AUTH_DOMAIN"
-echo "ACME challenge domain:        $CERT_CHALLENGE_SUBDOMAIN"
+echo "ACME challenge subdomain:     $CERT_CHALLENGE_SUBDOMAIN"
 echo ""
 echo "ACME server:                  $ACME_SERVER"
 echo "Cert email address:           $CERT_EMAIL"

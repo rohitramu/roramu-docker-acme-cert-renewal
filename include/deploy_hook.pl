@@ -11,7 +11,7 @@ my $FULLCHAINFILE = $ARGV[3];
 my $CHAINFILE = $ARGV[4];
 my $TIMESTAMP = $ARGV[5];
 
-print "Using default (no-op) deploy-hook!\n";
+print "WARNING: Using default (no-op) deploy-hook!\n";
 print "\n";
 print "Domain: $CHALLENGE_DOMAIN\n";
 print "Key file: $KEYFILE\n";

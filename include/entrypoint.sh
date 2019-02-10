@@ -53,7 +53,7 @@ fi
 
 if [ -z "$DEPLOY_HOOK" ]; then
     DEPLOY_HOOK=$WORKING_DIR/deploy_hook.pl
-    echo "WARNING: A deploy-hook command was not specified... defaulting to: '$DEPLOY_HOOK'" >&2
+    echo "WARNING: A deploy-hook command was not specified... defaulting to: '$DEPLOY_HOOK'"
 fi
 
 # ACME server (certificate authority)
@@ -71,8 +71,6 @@ export PDNS_HOOKS=$WORKING_DIR/pdns_backend.pl
 # PowerDNS log file
 export PDNS_LOG=$WORKING_DIR/pdns.log
 
-# Dehydrated working directory
-export CERT_WORKING_DIR=${CERT_WORKING_DIR:-/usr/local/etc/acme-cert-renewal}
 # Temp dehydrated working directory
 export TEMP_CERT_WORKING_DIR=$WORKING_DIR/dehydrated
 # Domains file for dehydrated
@@ -86,12 +84,15 @@ echo ""
 echo "========="
 echo "Working directory:            $WORKING_DIR"
 echo "Cert working directory:       $CERT_WORKING_DIR"
-echo "Temp cert working directory:  $TEMP_CERT_WORKING_DIR"
+echo "Temp working directory:       $TEMP_CERT_WORKING_DIR"
+echo ""
 echo "Certificate domain:           $DOMAIN"
 echo "Authentication domain:        $AUTH_DOMAIN"
 echo "ACME challenge domain:        $CERT_CHALLENGE_SUBDOMAIN"
+echo ""
 echo "ACME server:                  $ACME_SERVER"
 echo "Cert email address:           $CERT_EMAIL"
+echo ""
 echo "Deploy-hook:                  $DEPLOY_HOOK"
 echo "========="
 echo ""
@@ -99,9 +100,20 @@ echo ""
 # Create CERT_WORKING_DIR if it doesn't exist
 mkdir -p $CERT_WORKING_DIR
 
+# Make sure the temp directory exists and is empty
+mkdir -p $TEMP_CERT_WORKING_DIR
+rm -rf $TEMP_CERT_WORKING_DIR/*
+
 # Copy contents of $CERT_WORKING_DIR to $TEMP_CERT_WORKING_DIR
-rm -rf $TEMP_CERT_WORKING_DIR
-cp -R $CERT_WORKING_DIR/ $TEMP_CERT_WORKING_DIR/
+echo ""
+echo "+---------------------+"
+echo "| Start copy cert dir |"
+echo "+---------------------+"
+cp -LTR --verbose $CERT_WORKING_DIR $TEMP_CERT_WORKING_DIR/
+echo "+-------------------+"
+echo "| End copy cert dir |"
+echo "+-------------------+"
+echo ""
 
 # Write domains.txt
 echo "$DOMAIN *.$DOMAIN" > $CERT_DOMAINS_TXT
@@ -173,22 +185,40 @@ echo "| End generate/renew certificate |"
 echo "+--------------------------------+"
 echo ""
 
+# Delete archived files and empty directories so cleaned up files don't get copied to the output directory
+rm -rf $TEMP_CERT_WORKING_DIR/archive
+find $TEMP_CERT_WORKING_DIR -type d -empty -delete
+
+# Clear the output directory
+rm -rf $CERT_WORKING_DIR/*
+
 # Copy contents of $TEMP_CERT_WORKING_DIR to $CERT_WORKING_DIR
-cp -R $TEMP_CERT_WORKING_DIR/ $CERT_WORKING_DIR/
+echo ""
+echo "+---------------------+"
+echo "| Start copy temp dir |"
+echo "+---------------------+"
+cp -LTR --verbose $TEMP_CERT_WORKING_DIR $CERT_WORKING_DIR/
+echo "+-------------------+"
+echo "| End copy temp dir |"
+echo "+-------------------+"
+echo ""
 
 # Print out the complete runtime log of PowerDNS
-echo ""
-echo "+--------------------+"
-echo "| Start PowerDNS log |"
-echo "+--------------------+"
 # If debug mode is on, don't quit - print PowerDNS log output so requests/responses can be monitored
 if ! [ -z "$DEBUG" ]; then
     # Start watching logs
-    echo "Debug mode is on - PowerDNS will continue to run and log output will be shown below (press <enter> to continue)..."
-    tail -f $PDNS_LOG 2>&1 &
-    TAIL_PID=$!
-    read -sn 1
-    kill $TAIL_PID
+    echo "Debug mode is on - PowerDNS will continue to run and log output will be shown below (press <Ctrl-C> to continue)..."
+    trap 'echo ""' INT
+
+    echo ""
+    echo "+--------------------+"
+    echo "| Start PowerDNS log |"
+    echo "+--------------------+"
+    tail -f $PDNS_LOG
+    echo "+------------------+"
+    echo "| End PowerDNS log |"
+    echo "+------------------+"
+    echo ""
 
     # Kill the PowerDNS server after user stopped watching logs
     echo "Stopping PowerDNS server"
@@ -199,6 +229,10 @@ else
     kill $PDNS_PID
 
     # Print logs
+    echo ""
+    echo "+--------------------+"
+    echo "| Start PowerDNS log |"
+    echo "+--------------------+"
     cat $PDNS_LOG
     echo "+------------------+"
     echo "| End PowerDNS log |"

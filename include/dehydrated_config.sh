@@ -46,7 +46,7 @@ CHALLENGETYPE=dns-01
 #DOMAINS_D=
 
 # Base directory for account key, generated certificates and list of domains (default: $SCRIPTDIR -- uses config directory if undefined)
-BASEDIR=$CERT_WORKING_DIR
+BASEDIR=$TEMP_CERT_WORKING_DIR
 
 # File containing the list of domains to request certificates for (default: $BASEDIR/domains.txt)
 DOMAINS_TXT=$CERT_DOMAINS_TXT

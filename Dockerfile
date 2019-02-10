@@ -47,6 +47,10 @@ RUN echo "" && \
     apk add perl && \
     echo "" && \
     echo "" && \
+    echo "+-------------------+" && \
+    echo "| Install findutils |" && \
+    echo "+-------------------+" && \
+    apk --no-cache add findutils && \
     echo "+--------------+" && \
     echo "| Install curl |" && \
     echo "+--------------+" && \

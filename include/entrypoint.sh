@@ -61,20 +61,23 @@ if [ -z "$DEPLOY_HOOK" ]; then
 fi
 
 if [ -z "$LOAD_HOOK" ] || [ -z "$SAVE_HOOK" ]; then
-    LOAD_HOOK=$WORKING_DIR/load_hook.sh
-    SAVE_HOOK=$WORKING_DIR/save_hook.sh
+    DEFAULT_LOAD_HOOK=$WORKING_DIR/load_hook.sh
+    DEFAULT_SAVE_HOOK=$WORKING_DIR/save_hook.sh
 
     if [ -z "$LOAD_HOOK" ]; then
-        echo "WARNING: A load-hook command was not specified... defaulting to: '$LOAD_HOOK'"
+        echo "WARNING: A load-hook command was not specified... defaulting to: '$DEFAULT_LOAD_HOOK'"
     else
-        echo "WARNING: A load-hook command was found, but no save-hook was specified... defaulting to: '$LOAD_HOOK'"
+        echo "WARNING: A load-hook command was found, but no save-hook was specified... defaulting to: '$DEFAULT_LOAD_HOOK'"
     fi
 
     if [ -z "$SAVE_HOOK" ]; then
-        echo "WARNING: A save-hook command was not specified... defaulting to: '$SAVE_HOOK'"
+        echo "WARNING: A save-hook command was not specified... defaulting to: '$DEFAULT_SAVE_HOOK'"
     else
-        echo "WARNING: A save-hook command was found, but no load-hook was specified... defaulting to: '$SAVE_HOOK'"
+        echo "WARNING: A save-hook command was found, but no load-hook was specified... defaulting to: '$DEFAULT_SAVE_HOOK'"
     fi
+
+    LOAD_HOOK=$WORKING_DIR/load_hook.sh
+    SAVE_HOOK=$WORKING_DIR/save_hook.sh
 fi
 
 # Certificate challenges environment variable (one challenge token per line)

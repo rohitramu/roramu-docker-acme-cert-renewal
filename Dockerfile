@@ -83,6 +83,12 @@ RUN echo "" && \
     apk add findutils && \
     echo "" && \
     echo "" && \
+    echo "+-------------------+" && \
+    echo "| Install coreutils |" && \
+    echo "+-------------------+" && \
+    apk add coreutils && \
+    echo "" && \
+    echo "" && \
     echo "+--------------+" && \
     echo "| Install curl |" && \
     echo "+--------------+" && \

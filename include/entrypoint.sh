@@ -1,5 +1,24 @@
 #!/bin/sh
 
+# Validate constant environment variables
+if [ -z "$WORKING_DIR" ]; then
+    echo "ERROR: A working directory was not specified" >&2
+    exit 1
+fi
+
+if [ -z "$CERT_WORKING_DIR" ]; then
+    echo "ERROR: A working directory for certificate generation was not specified" >&2
+    exit 1
+fi
+
+# $CERT_WORKING_DIR should not be a subdirectory of $WORKING_DIR
+if [ "${CERT_WORKING_DIR##$WORKING_DIR}" != "$CERT_WORKING_DIR" ]; then
+    echo "ERROR: \$CERT_WORKING_DIR must not be a subdirectory of \$WORKING_DIR" >&2
+    echo "    \$WORKING_DIR = $WORKING_DIR" >&2
+    echo "    \$CERT_WORKING_DIR = $CERT_WORKING_DIR" >&2
+    exit 1
+fi
+
 # Absolute path to this script
 SCRIPT=$(readlink -f "$0")
 # Absolute path this script is in
@@ -53,29 +72,36 @@ export PDNS_HOOKS=$WORKING_DIR/pdns_backend.pl
 export PDNS_LOG=$WORKING_DIR/pdns.log
 
 # Dehydrated working directory
-export CERT_WORKING_DIR=${CERT_WORKING_DIR:-$WORKING_DIR/dehydrated}
+export CERT_WORKING_DIR=${CERT_WORKING_DIR:-/usr/local/etc/acme-cert-renewal}
+# Temp dehydrated working directory
+export TEMP_CERT_WORKING_DIR=$WORKING_DIR/dehydrated
 # Domains file for dehydrated
-export CERT_DOMAINS_TXT=$CERT_WORKING_DIR/domains.txt
+export CERT_DOMAINS_TXT=$WORKING_DIR/domains.txt
 # Cert output directory
-export CERT_DIR=$CERT_WORKING_DIR/certs/$DOMAIN
+export CERT_DIR=$TEMP_CERT_WORKING_DIR/certs/$DOMAIN
 # Account output directory
-export ACCOUNTS_DIR=$CERT_WORKING_DIR/accounts
+export ACCOUNTS_DIR=$TEMP_CERT_WORKING_DIR/accounts
 
 echo ""
 echo "========="
-echo "Working directory:        $WORKING_DIR"
-echo "Cert working directory:   $CERT_WORKING_DIR"
-echo "Certificate domain:       $DOMAIN"
-echo "Authentication domain:    $AUTH_DOMAIN"
-echo "ACME challenge domain:    $CERT_CHALLENGE_SUBDOMAIN"
-echo "ACME server:              $ACME_SERVER"
-echo "Cert email address:       $CERT_EMAIL"
-echo "Deploy-hook:              $DEPLOY_HOOK"
+echo "Working directory:            $WORKING_DIR"
+echo "Cert working directory:       $CERT_WORKING_DIR"
+echo "Temp cert working directory:  $TEMP_CERT_WORKING_DIR"
+echo "Certificate domain:           $DOMAIN"
+echo "Authentication domain:        $AUTH_DOMAIN"
+echo "ACME challenge domain:        $CERT_CHALLENGE_SUBDOMAIN"
+echo "ACME server:                  $ACME_SERVER"
+echo "Cert email address:           $CERT_EMAIL"
+echo "Deploy-hook:                  $DEPLOY_HOOK"
 echo "========="
 echo ""
 
 # Create CERT_WORKING_DIR if it doesn't exist
 mkdir -p $CERT_WORKING_DIR
+
+# Copy contents of $CERT_WORKING_DIR to $TEMP_CERT_WORKING_DIR
+rm -rf $TEMP_CERT_WORKING_DIR
+cp -R $CERT_WORKING_DIR/ $TEMP_CERT_WORKING_DIR/
 
 # Write domains.txt
 echo "$DOMAIN *.$DOMAIN" > $CERT_DOMAINS_TXT
@@ -147,23 +173,39 @@ echo "| End generate/renew certificate |"
 echo "+--------------------------------+"
 echo ""
 
-# If debug mode is on, don't quit - print PowerDNS log output so requests/responses can be monitored
-if ! [ -z "$DEBUG" ]; then
-    echo "Debug mode is on - PowerDNS will continue to run and log output will be shown below..."
-    tail -f $PDNS_LOG
-fi
-
-# Kill the PowerDNS server
-kill $PDNS_PID
-echo "Stopped PowerDNS server"
+# Copy contents of $TEMP_CERT_WORKING_DIR to $CERT_WORKING_DIR
+cp -R $TEMP_CERT_WORKING_DIR/ $CERT_WORKING_DIR/
 
 # Print out the complete runtime log of PowerDNS
 echo ""
 echo "+--------------------+"
 echo "| Start PowerDNS log |"
 echo "+--------------------+"
-cat $PDNS_LOG
-echo "+------------------+"
-echo "| End PowerDNS log |"
-echo "+------------------+"
-echo ""
+# If debug mode is on, don't quit - print PowerDNS log output so requests/responses can be monitored
+if ! [ -z "$DEBUG" ]; then
+    # Start watching logs
+    echo "Debug mode is on - PowerDNS will continue to run and log output will be shown below (press <enter> to continue)..."
+    tail -f $PDNS_LOG 2>&1 &
+    TAIL_PID=$!
+    read -sn 1
+    kill $TAIL_PID
+
+    # Kill the PowerDNS server after user stopped watching logs
+    echo "Stopping PowerDNS server"
+    kill $PDNS_PID
+else
+    # Kill the PowerDNS server before printing logs
+    echo "Stopping PowerDNS server"
+    kill $PDNS_PID
+
+    # Print logs
+    cat $PDNS_LOG
+    echo "+------------------+"
+    echo "| End PowerDNS log |"
+    echo "+------------------+"
+    echo ""
+fi
+
+
+
+

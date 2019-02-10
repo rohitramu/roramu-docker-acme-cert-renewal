@@ -80,7 +80,9 @@ RUN echo "" && \
     echo "+-------------------+" && \
     echo "| Install findutils |" && \
     echo "+-------------------+" && \
-    apk --no-cache add findutils && \
+    apk add findutils && \
+    echo "" && \
+    echo "" && \
     echo "+--------------+" && \
     echo "| Install curl |" && \
     echo "+--------------+" && \

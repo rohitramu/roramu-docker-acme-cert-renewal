@@ -42,12 +42,12 @@ while(<STDIN>)
     $qtype = uc $qtype;
 
     if (($qtype eq "SOA" || $qtype eq "ANY") && $qname =~ m/$MATCH_AUTH_DOMAIN/) {
-        my $result = "DATA\t$qname\t$qclass\tSOA\t3600\t-1\t$AUTH_DOMAIN $AUTH_DOMAIN 2008080300 1800 3600 604800 3600\n";
+        my $result = "DATA\t$qname\t$qclass\tSOA\t3600\t$id\t$AUTH_DOMAIN $AUTH_DOMAIN 2008080300 1800 3600 604800 3600\n";
         print STDERR "Returned: $result";
         print $result;
     }
     if (($qtype eq "NS" || $qtype eq "ANY") && $qname =~ m/$MATCH_AUTH_DOMAIN/) {
-        my $result = "DATA\t$qname\t$qclass\tNS\t3600\t-1\t$AUTH_DOMAIN\n";
+        my $result = "DATA\t$qname\t$qclass\tNS\t3600\t$id\t$AUTH_DOMAIN\n";
         print STDERR "Returned: $result";
         print $result;
     }
@@ -69,7 +69,7 @@ while(<STDIN>)
 
         # Send the challenge tokens
         foreach (@CERT_CHALLENGE_TOKENS) {
-            my $result = "DATA\t$qname\t$qclass\tTXT\t1\t-1\t\"$_\"\n";
+            my $result = "DATA\t$qname\t$qclass\tTXT\t1\t$id\t$_\n";
             print STDERR "Returned: $result";
             print $result;
         }

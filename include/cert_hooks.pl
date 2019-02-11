@@ -71,6 +71,8 @@ if ($HOOK eq "startup_hook") {
     my $TIMESTAMP = $ARGV[6];
 
     my $DEPLOY_HOOK = $ENV{'DEPLOY_HOOK'};
+    my $DEPLOY_LOG = $ENV{'DEPLOY_LOG'};
+    my $DEPLOY_LOG_ERR = $ENV{'DEPLOY_LOG_ERR'};
 
     print "Certificate can be deployed...\n";
     print "Deploy hook: $DEPLOY_HOOK\n";
@@ -84,7 +86,11 @@ if ($HOOK eq "startup_hook") {
     # Call the deploy-hook
     print "\n";
     print "== Start deploy-hook ==\n";
-    system("$DEPLOY_HOOK \"$CHALLENGE_DOMAIN\" \"$KEYFILE\" \"$CERTFILE\" \"$FULLCHAINFILE\" \"$CHAINFILE\" \"$TIMESTAMP\"");
+    system("echo Starting deploy-hook... > $DEPLOY_LOG");
+    if (system("$DEPLOY_HOOK \"$CHALLENGE_DOMAIN\" \"$KEYFILE\" \"$CERTFILE\" \"$FULLCHAINFILE\" \"$CHAINFILE\" \"$TIMESTAMP\" | tee \"$DEPLOY_LOG\"") != 0) {
+        # If the deploy hook failed, rename the file to indicate failure
+        system("mv \"$DEPLOY_LOG\" \"$DEPLOY_LOG_ERR\"");
+    }
     print "== End deploy-hook ==\n";
     print "\n";
 

@@ -91,7 +91,11 @@ export CERT_DOMAINS_TXT=$WORKING_DIR/domains.txt
 # PowerDNS hooks
 export PDNS_HOOKS=$WORKING_DIR/pdns_backend.pl
 # PowerDNS log file
-export PDNS_LOG=$WORKING_DIR/pdns.log
+export PDNS_LOG=$WORKING_DIR/pdns_output.log
+# Deploy log file
+export DEPLOY_LOG=$WORKING_DIR/deploy_output.log
+# Deploy error log file
+export DEPLOY_LOG_ERR=$DEPLOY_LOG.err
 
 # Temp dehydrated working directory
 export TEMP_CERT_WORKING_DIR=$WORKING_DIR/dehydrated
@@ -115,6 +119,11 @@ echo ""
 echo "Deploy-hook:                  $DEPLOY_HOOK"
 echo "========="
 echo ""
+
+# Delete log files if they exist
+rm -rf $PDNS_LOG
+rm -rf $DEPLOY_LOG
+rm -rf $DEPLOY_LOG_ERR
 
 # Create $CERT_WORKING_DIR if it doesn't exist
 mkdir -p $CERT_WORKING_DIR
@@ -215,35 +224,42 @@ echo "| End generate/renew certificate |"
 echo "+--------------------------------+"
 echo ""
 
-# Delete archived files and empty directories so cleaned up files don't get copied to the output directory
-rm -rf $TEMP_CERT_WORKING_DIR/archive
-find $TEMP_CERT_WORKING_DIR -type d -empty -delete
+# Don't bother cleaning up or saving files if cert deployment never happened - i.e. there was a failure,
+# or the cert didn't need to be created/renewed
+if test -f $DEPLOY_LOG; then
+    # Delete archived files and empty directories so cleaned up files don't get copied to the output directory
+    rm -rf $TEMP_CERT_WORKING_DIR/archive
+    find $TEMP_CERT_WORKING_DIR -type d -empty -delete
 
-# Clear the output directory
-rm -rf $CERT_WORKING_DIR/*
+    # Clear the output directory
+    rm -rf $CERT_WORKING_DIR/*
 
-# Copy contents of $TEMP_CERT_WORKING_DIR to $CERT_WORKING_DIR, resolving all symlinks
-echo ""
-echo "+------------------------------+"
-echo "| Start copy files to be saved |"
-echo "+------------------------------+"
-cp -LTR --verbose $TEMP_CERT_WORKING_DIR $CERT_WORKING_DIR/
-cp -LTf --verbose $PDNS_LOG $CERT_WORKING_DIR/${PDNS_LOG##*/}
-echo "+----------------------------+"
-echo "| End copy files to be saved |"
-echo "+----------------------------+"
-echo ""
+    # Copy contents of $TEMP_CERT_WORKING_DIR to $CERT_WORKING_DIR, resolving all symlinks
+    echo ""
+    echo "+------------------------------+"
+    echo "| Start copy files to be saved |"
+    echo "+------------------------------+"
+    cp -LTR --verbose $TEMP_CERT_WORKING_DIR $CERT_WORKING_DIR/
 
-# Call the save-hook to persist the directory's contents
-echo ""
-echo "+-----------------+"
-echo "| Start save-hook |"
-echo "+-----------------+"
-$SAVE_HOOK "$CERT_WORKING_DIR"
-echo "+---------------+"
-echo "| End save-hook |"
-echo "+---------------+"
-echo ""
+    # Also include some log files to assist debugging
+    cp -LTf --verbose $PDNS_LOG $CERT_WORKING_DIR/${PDNS_LOG##*/}
+    cp -LTf --verbose $DEPLOY_LOG $CERT_WORKING_DIR/${DEPLOY_LOG##*/}
+    echo "+----------------------------+"
+    echo "| End copy files to be saved |"
+    echo "+----------------------------+"
+    echo ""
+
+    # Call the save-hook to persist the directory's contents
+    echo ""
+    echo "+-----------------+"
+    echo "| Start save-hook |"
+    echo "+-----------------+"
+    $SAVE_HOOK "$CERT_WORKING_DIR"
+    echo "+---------------+"
+    echo "| End save-hook |"
+    echo "+---------------+"
+    echo ""
+fi
 
 # Print out the complete runtime log of PowerDNS
 # If debug mode is on, don't quit - print PowerDNS log output so requests/responses can be monitored

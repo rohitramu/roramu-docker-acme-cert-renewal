@@ -90,12 +90,6 @@ export DEHYDRATED_CONFIG=$WORKING_DIR/dehydrated_config.sh
 export CERT_DOMAINS_TXT=$WORKING_DIR/domains.txt
 # PowerDNS hooks
 export PDNS_HOOKS=$WORKING_DIR/pdns_backend.pl
-# PowerDNS log file
-export PDNS_LOG=$WORKING_DIR/pdns_output.log
-# Deploy log file
-export DEPLOY_LOG=$WORKING_DIR/deploy_output.log
-# Deploy error log file
-export DEPLOY_LOG_ERR=$DEPLOY_LOG.err
 
 # Temp dehydrated working directory
 export TEMP_CERT_WORKING_DIR=$WORKING_DIR/dehydrated
@@ -103,6 +97,12 @@ export TEMP_CERT_WORKING_DIR=$WORKING_DIR/dehydrated
 export CERT_DIR=$TEMP_CERT_WORKING_DIR/certs/$DOMAIN
 # Account output directory
 export ACCOUNTS_DIR=$TEMP_CERT_WORKING_DIR/accounts
+# PowerDNS log file
+export PDNS_LOG=$TEMP_CERT_WORKING_DIR/pdns.log
+# Deploy log file
+export DEPLOY_LOG=$TEMP_CERT_WORKING_DIR/deploy.log
+# Deploy error log file
+export DEPLOY_LOG_ERR=$DEPLOY_LOG.err
 
 echo ""
 echo "========="
@@ -119,11 +119,6 @@ echo ""
 echo "Deploy-hook:                  $DEPLOY_HOOK"
 echo "========="
 echo ""
-
-# Delete log files if they exist
-rm -rf $PDNS_LOG
-rm -rf $DEPLOY_LOG
-rm -rf $DEPLOY_LOG_ERR
 
 # Create $CERT_WORKING_DIR if it doesn't exist
 mkdir -p $CERT_WORKING_DIR
@@ -153,6 +148,11 @@ echo "+-----------------------+"
 echo "| End copy loaded files |"
 echo "+-----------------------+"
 echo ""
+
+# Delete log files if they exist
+rm -rf $PDNS_LOG
+rm -rf $DEPLOY_LOG
+rm -rf $DEPLOY_LOG_ERR
 
 # Write domains.txt
 echo "$DOMAIN *.$DOMAIN" > $CERT_DOMAINS_TXT
@@ -240,10 +240,6 @@ if test -f $DEPLOY_LOG; then
     echo "| Start copy files to be saved |"
     echo "+------------------------------+"
     cp -LTR --verbose $TEMP_CERT_WORKING_DIR $CERT_WORKING_DIR/
-
-    # Also include some log files to assist debugging
-    cp -LTf --verbose $PDNS_LOG $CERT_WORKING_DIR/${PDNS_LOG##*/}
-    cp -LTf --verbose $DEPLOY_LOG $CERT_WORKING_DIR/${DEPLOY_LOG##*/}
     echo "+----------------------------+"
     echo "| End copy files to be saved |"
     echo "+----------------------------+"

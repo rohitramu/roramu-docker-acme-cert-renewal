@@ -3,7 +3,7 @@
 # | Usage of this image |
 # +---------------------+
 # - The ENTRYPOINT or CMD commands SHOULD NOT be overridden in child images.
-# - The follwing environment variables MUST be provided:
+# - The following environment variables MUST be provided:
 #       - $ACME_SERVER: The ACME server that will be used.  If this is not set, it will default to the
 #         "Let's Encrypt" staging URL.  Any ACME server URL may be provided, but for reference, the
 #         "Let's Encrypt" v2 certificate authority URLs are:
@@ -37,6 +37,11 @@
 # - Outbound ports that need to be open to the internet:
 #       - 80/tcp
 #       - 443/tcp
+# - The following DNS records should be placed in the DNS zone specified by $DOMAIN in order for the
+#   ACME challenge to work:
+#      1. CNAME record that points from "$CERT_CHALLENGE_SUBDOMAIN.$DOMAIN" to
+#         "$CERT_CHALLENGE_SUBDOMAIN.$AUTH_DOMAIN"
+#      2. NS record that points to the server that this image is running on.
 #
 FROM alpine:latest
 

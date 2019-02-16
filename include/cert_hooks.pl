@@ -25,7 +25,7 @@ if ($HOOK eq "startup_hook") {
     close $fh;
 
     # Wait here for user input if debug mode is turned on
-    if ($ENV{'DEBUG'} =~ /^\s$/) {
+    if ($ENV{'DEBUG'} eq "true") {
         print "Debug mode is on - press <enter> to continue...\n";
         my $tmp = <STDIN>;
     }
@@ -56,7 +56,7 @@ if ($HOOK eq "startup_hook") {
     close $fhWrite;
 
     # Wait here for user input if debug mode is turned on
-    if ($ENV{'DEBUG'} =~ /^\s$/) {
+    if ($ENV{'DEBUG'} eq "true") {
         print "Debug mode is on - press <enter> to continue...\n";
         my $tmp = <STDIN>;
     }

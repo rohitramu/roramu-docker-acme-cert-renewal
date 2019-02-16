@@ -190,7 +190,7 @@ if ! kill -s 0 $PDNS_PID; then
 fi
 
 # Allow user to continue when ready if debug mode is on
-if ! [ -z "$DEBUG" ]; then
+if [ "$DEBUG" = "true" ]; then
     echo "Debug mode is on - starting shell... run 'exit' to continue, or 'exit 1' to stop"
     sh
     if [ $? -ne 0 ]; then
@@ -259,7 +259,7 @@ fi
 
 # Print out the complete runtime log of PowerDNS
 # If debug mode is on, don't quit - print PowerDNS log output so requests/responses can be monitored
-if ! [ -z "$DEBUG" ]; then
+if [ "$DEBUG" = "true" ]; then
     # Start watching logs
     echo "Debug mode is on - PowerDNS will continue to run and log output will be shown below (press <Ctrl-C> to continue)..."
     trap 'echo ""' INT

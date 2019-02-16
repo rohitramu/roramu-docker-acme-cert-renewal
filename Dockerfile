@@ -54,8 +54,8 @@ ENV \
 
 # Environment variables that MAY be modified by users to alter the runtime configuration
 ENV \
-    # Set $DEBUG to any non-empty value to turn on debug mode
-    DEBUG="" \
+    # Set $DEBUG to "true" to turn on debug mode
+    DEBUG="false" \
     # Default subdomain that will contain the challenge TXT records
     CERT_CHALLENGE_SUBDOMAIN="_acme-challenge"
 

@@ -41,17 +41,17 @@ while(<STDIN>)
     $qname = lc $qname;
     $qtype = uc $qtype;
 
-    if (($qtype eq "SOA" || $qtype eq "ANY") && $qname =~ m/$MATCH_AUTH_DOMAIN/) {
+    if ($qtype eq "SOA" || $qtype eq "ANY") {
         my $result = "DATA\t$qname\t$qclass\tSOA\t3600\t$id\t$AUTH_DOMAIN $AUTH_DOMAIN 2008080300 1800 3600 604800 3600\n";
         print STDERR "Returned: $result";
         print $result;
     }
-    if (($qtype eq "NS" || $qtype eq "ANY") && $qname =~ m/$MATCH_AUTH_DOMAIN/) {
+    if ($qtype eq "NS" || $qtype eq "ANY") {
         my $result = "DATA\t$qname\t$qclass\tNS\t3600\t$id\t$AUTH_DOMAIN\n";
         print STDERR "Returned: $result";
         print $result;
     }
-    if (($qtype eq "TXT" || $qtype eq "ANY") && $qname eq $CERT_CHALLENGE_DOMAIN) {
+    if ($qtype eq "TXT" || $qtype eq "ANY") {
         open(my $fh, '<', $CERT_CHALLENGES_FILE) or die "Could not open file '$CERT_CHALLENGES_FILE' $!";
         my @CERT_CHALLENGE_TOKENS = <$fh>;
         close $fh;

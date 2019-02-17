@@ -21,7 +21,11 @@ print "OK\tBackend firing up\n"; # Print our banner
 my $AUTH_DOMAIN = lc $ENV{'AUTH_DOMAIN'};
 my $CERT_CHALLENGES_FILE = $ENV{'CERT_CHALLENGES_FILE'};
 my $CERT_CHALLENGE_DOMAIN = lc "$ENV{'CERT_CHALLENGE_SUBDOMAIN'}.$AUTH_DOMAIN";
-my $MATCH_AUTH_DOMAIN = "^(.+\\.)?$AUTH_DOMAIN(\\.)?\$";
+
+# Create the regex for verifying that the DNS requests are for the correct domain
+my $AUTH_DOMAIN_SANITIZED = $AUTH_DOMAIN;
+$AUTH_DOMAIN_SANITIZED =~ s/\./\\\./g;
+my $MATCH_AUTH_DOMAIN = "^(.+\\.)?$AUTH_DOMAIN_SANITIZED(\\.)?\$";
 
 while(<STDIN>)
 {
@@ -41,39 +45,46 @@ while(<STDIN>)
     $qname = lc $qname;
     $qtype = uc $qtype;
 
-    if ($qtype eq "SOA" || $qtype eq "ANY") {
-        my $result = "DATA\t$qname\t$qclass\tSOA\t3600\t$id\t$AUTH_DOMAIN $AUTH_DOMAIN 2008080300 1800 3600 604800 3600\n";
-        print STDERR "Returned: $result";
-        print $result;
-    }
-    if ($qtype eq "NS" || $qtype eq "ANY") {
-        my $result = "DATA\t$qname\t$qclass\tNS\t3600\t$id\t$AUTH_DOMAIN\n";
-        print STDERR "Returned: $result";
-        print $result;
-    }
-    if ($qtype eq "TXT" || $qtype eq "ANY") {
-        open(my $fh, '<', $CERT_CHALLENGES_FILE) or die "Could not open file '$CERT_CHALLENGES_FILE' $!";
-        my @CERT_CHALLENGE_TOKENS = <$fh>;
-        close $fh;
-
-        # Trim whitespace from each line
-        chomp @CERT_CHALLENGE_TOKENS;
-        # Remove empty lines
-        @CERT_CHALLENGE_TOKENS = grep { $_ ne '' } @CERT_CHALLENGE_TOKENS;
-
-        # Check if there are no challenge tokens
-        if (scalar(@CERT_CHALLENGE_TOKENS) == 0) {
-            # Send a standard response which indicates that no challenge tokens were found
-            push @CERT_CHALLENGE_TOKENS, "NO_CHALLENGE_TOKENS_FOUND";
-        }
-
-        # Send the challenge tokens
-        foreach (@CERT_CHALLENGE_TOKENS) {
-            my $result = "DATA\t$qname\t$qclass\tTXT\t1\t$id\t$_\n";
+    # Make sure the request is for this domain
+    if ($qname !~ m/$MATCH_AUTH_DOMAIN/) {
+        # Log that the domain didn't match
+        print STDERR "Invalid request: question '$qname' does not belong to domain '$AUTH_DOMAIN'\n";
+    } else {
+        if ($qtype eq "SOA" || $qtype eq "ANY") {
+            my $result = "DATA\t$qname\t$qclass\tSOA\t3600\t$id\t$AUTH_DOMAIN $AUTH_DOMAIN 2008080300 1800 3600 604800 3600\n";
             print STDERR "Returned: $result";
             print $result;
         }
-    
+
+        if ($qtype eq "NS" || $qtype eq "ANY") {
+            my $result = "DATA\t$qname\t$qclass\tNS\t3600\t$id\t$AUTH_DOMAIN\n";
+            print STDERR "Returned: $result";
+            print $result;
+        }
+
+        if ($qtype eq "TXT" || $qtype eq "ANY") {
+            open(my $fh, '<', $CERT_CHALLENGES_FILE) or die "Could not open file '$CERT_CHALLENGES_FILE' $!";
+            my @CERT_CHALLENGE_TOKENS = <$fh>;
+            close $fh;
+
+            # Trim whitespace from each line
+            chomp @CERT_CHALLENGE_TOKENS;
+            # Remove empty lines
+            @CERT_CHALLENGE_TOKENS = grep { $_ ne '' } @CERT_CHALLENGE_TOKENS;
+
+            # Check if there are no challenge tokens
+            if (scalar(@CERT_CHALLENGE_TOKENS) == 0) {
+                # Send a standard response which indicates that no challenge tokens were found
+                push @CERT_CHALLENGE_TOKENS, "NO_CHALLENGE_TOKENS_FOUND";
+            }
+
+            # Send the challenge tokens
+            foreach (@CERT_CHALLENGE_TOKENS) {
+                my $result = "DATA\t$qname\t$qclass\tTXT\t1\t$id\t$_\n";
+                print STDERR "Returned: $result";
+                print $result;
+            }
+        }
     }
 
     print STDERR "$$ End of data\n";
